@@ -362,6 +362,21 @@ function revisarReglas(dias, festivos, max, maxFest) {
 }
 
 /* ---------- Aviso por correo a la encargada ---------- */
+/** Ejecuta esta función desde el editor para comprobar que te llegan los avisos. */
+function probarCorreo() {
+  const t = leerTodo_();
+  if (!t.correoAvisos || t.correoAvisos.indexOf('@') < 0) {
+    throw new Error('No hay ningún correo en Ajustes (celda B4).');
+  }
+  MailApp.sendEmail({
+    to: t.correoAvisos,
+    subject: 'Vacaciones ' + ANIO + ': correo de prueba',
+    body: 'Si lees esto, los avisos funcionan. Te llegará un correo así cada vez que alguien confirme sus vacaciones.',
+    name: 'Vacaciones ' + ANIO
+  });
+  console.log('Correo de prueba enviado a ' + t.correoAvisos + '. Quedan ' + MailApp.getRemainingDailyQuota() + ' envíos hoy.');
+}
+
 function avisar_(t, nombre, anadidos, quitados) {
   if (!t.correoAvisos || t.correoAvisos.indexOf('@') < 0) return;
   const MS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
