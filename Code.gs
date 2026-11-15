@@ -416,11 +416,12 @@ const COLORES_TEXTO = ['#1d4ed8', '#b91c1c', '#15803d', '#b45309', '#6d28d9', '#
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
 
-/** Menú en la hoja: Vacaciones > Preparar para imprimir */
+/** Al abrir la hoja: menú Vacaciones y pestaña Imprimir actualizada con las últimas reservas */
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Vacaciones')
     .addItem('Preparar hoja para imprimir', 'imprimir')
     .addToUi();
+  try { generarHojaImprimir_(); } catch (e) { console.log('No se pudo actualizar Imprimir: ' + e); }
 }
 
 function imprimir() {
