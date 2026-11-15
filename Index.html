@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{--bg:#f6f5f2;--ink:#1f2328;--mut:#6b7280;--line:#e5e2dc;--me:#2563eb;--sel:#16a34a;--rem:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+h1{font-size:21px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:13px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.login{max-width:380px;margin:60px auto;text-align:center}
+.login select{font:inherit;font-size:17px;padding:10px;border:1px solid var(--line);border-radius:10px;width:100%;margin-top:14px;background:#fff}
+.login label{display:block;text-align:left;font-size:13px;color:var(--mut);margin-top:12px}
+.login .lnk{background:none;border:none;color:var(--mut);font-size:12px;text-decoration:underline;margin-top:14px;padding:4px}
+.login input{font:inherit;font-size:20px;letter-spacing:.15em;text-transform:uppercase;text-align:center;padding:10px;border:1px solid var(--line);border-radius:10px;width:100%;margin:14px 0 10px}
+button{font:inherit;padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+button.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}
+.err{color:#b91c1c;font-size:13px;min-height:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.counter{font-size:15px}
+.counter b{font-size:22px}
+.bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-top:6px;width:220px;max-width:100%}
+.bar i{display:block;height:100%;background:var(--me)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:4px 0 12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.m h3{margin:0 0 6px;font-size:14px}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.h{font-size:10px;color:var(--mut);text-align:center;padding:2px 0}
+.d{aspect-ratio:1/1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;background:#fafaf8;border:1px solid transparent;cursor:pointer;user-select:none;line-height:1}
+.d small{font-size:7.5px;margin-top:2px;max-width:100%;overflow:hidden;white-space:nowrap}
+.d:hover{border-color:#bbb}
+.d.e{visibility:hidden}
+.d.we{background:#efede8;color:#b5afa6;cursor:default}
+.d.fe{background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 4px,#fff 4px,#fff 8px);color:#991b1b;cursor:default}
+.d.oc{background:#9ca3af;color:#fff;cursor:not-allowed}
+.d.me{background:var(--me);color:#fff;font-weight:600}
+.d.add{background:#dcfce7;color:#166534;border:2px solid var(--sel);font-weight:700}
+.d.rem{background:#fee2e2;color:#991b1b;border:2px dashed var(--rem);text-decoration:line-through}
+.d.we:hover,.d.fe:hover,.d.oc:hover{border-color:transparent}
+.rcpt-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:14px;z-index:20;overflow:auto}
+.rcpt{background:#f0fdf4;border:2px solid #16a34a;border-radius:16px;max-width:440px;width:100%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.rcpt .ok{display:flex;align-items:center;gap:10px;color:#15803d;font-weight:700;font-size:19px}
+.rcpt .ok i{width:34px;height:34px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:20px;flex:none}
+.rcpt .pend{margin-top:12px;background:#fffbeb;border:1px solid #f59e0b;color:#92400e;border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.4}
+.rcpt dl{margin:14px 0 0;font-size:14px}
+.rcpt dt{color:#4b5563;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.03em}
+.rcpt dd{margin:2px 0 0;font-weight:600;color:#14532d}
+.rcpt ul{margin:4px 0 0;padding-left:18px;font-weight:600;color:#14532d}
+.rcpt .btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.rcpt .btns button{flex:1}
+.rcpt .gbtn{background:#16a34a;border-color:#16a34a;color:#fff}
+.rcpt img{width:100%;border-radius:10px;margin-top:12px;border:1px solid #bbf7d0}
+.rcpt .tip{font-size:12px;color:#4b5563;margin-top:8px}
+.bottom{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px;display:none;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -4px 12px rgba(0,0,0,.05)}
+.bottom.show{display:flex}
+.msg{padding:9px 11px;border-radius:8px;font-size:13px;margin-top:10px;display:none}
+.msg.show{display:block}
+.msg.ok{background:#e8f5ec;color:#166534}
+.msg.bad{background:#fde2e2;color:#991b1b}
+.sems{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.sem{border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12px;color:var(--mut);min-width:150px}
+.sem b{font-size:17px;color:var(--ink)}
+.sem.warn{border-color:#f59e0b;background:#fffbeb}
+.sem.bad{border-color:#dc2626;background:#fef2f2}
+.m.blk h3 span{font-weight:400;font-size:11px;color:#b91c1c}
+.d.bl{background:#f3f2ef;color:#c9c4bb;cursor:not-allowed}
+.d.bl:hover{border-color:transparent}
+.rules{margin-top:10px;font-size:13px;line-height:1.7;border-top:1px solid var(--line);padding-top:8px}
+.rules .ok{color:#15803d}.rules .pend{color:#92400e}.rules .no{color:#b91c1c}
+.closed{background:#fff4e0;color:#92400e;padding:9px 11px;border-radius:8px;font-size:13px;margin-top:10px}
+.mine{font-size:13px;color:var(--mut);margin-top:8px;line-height:1.6}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line)}
+.loading{text-align:center;color:var(--mut);padding:40px}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando…</div></div>
+<script>
+/* Regla: 4 semanas completas (lunes a viernes) + los días restantes juntos,
+   pegados a una semana o dentro de otra semana. Si una semana tiene festivo,
+   ese día se recupera el lunes siguiente (pegado a la semana) o junto a los 3. */
+function revisarReglas(dias, festivos, max, maxFest) {
+  if (maxFest == null) maxFest = 2;
+  const pad = n => String(n).padStart(2, '0');
+  const toK = t => t.getUTCFullYear() + '-' + pad(t.getUTCMonth() + 1) + '-' + pad(t.getUTCDate());
+  const toD = k => { const p = k.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); };
+  const lab = k => { const w = toD(k).getUTCDay(); return w >= 1 && w <= 5 && !festivos[k]; };
+  const lunes = k => { const t = toD(k); const w = (t.getUTCDay() + 6) % 7; return toK(new Date(t.getTime() - w * 864e5)); };
+  const mover = (k, paso) => { let t = toD(k); for (let i = 0; i < 20; i++) { t = new Date(t.getTime() + paso * 864e5); const x = toK(t); if (lab(x)) return x; } return null; };
+  const sel = {}; dias.forEach(k => sel[k] = true);
+  const lista = Object.keys(sel).sort();
+  // Semanas completas
+  const semanas = {};
+  lista.forEach(k => semanas[lunes(k)] = true);
+  const completas = [], enCompleta = {};
+  Object.keys(semanas).forEach(l => {
+    const lab5 = [];
+    let fest = 0;
+    for (let i = 0; i < 5; i++) { const x = toK(new Date(toD(l).getTime() + i * 864e5)); if (lab(x)) lab5.push(x); else if (festivos[x]) fest++; }
+    if (lab5.length && lab5.every(x => sel[x])) { completas.push({ lunes: l, fest: fest }); lab5.forEach(x => enCompleta[x] = true); }
+  });
+  // Días sueltos agrupados en tramos seguidos
+  const sueltos = lista.filter(k => !enCompleta[k]);
+  const tramos = [];
+  sueltos.forEach(k => {
+    const ult = tramos[tramos.length - 1];
+    if (ult && mover(ult[ult.length - 1], 1) === k) ult.push(k); else tramos.push([k]);
+  });
+  const pegado = t => enCompleta[mover(t[0], -1)] || enCompleta[mover(t[t.length - 1], 1)];
+  const libres = tramos.filter(t => !pegado(t));
+  const semFest = completas.filter(c => c.fest > 0).length;
+  const okSemanas = completas.length >= 4;
+  const okSueltos = libres.length <= 1 && libres.every(t => lunes(t[0]) === lunes(t[t.length - 1])) && tramos.length <= 1 + semFest;
+  const okFest = semFest <= maxFest;
+  const total = lista.length;
+  return {
+    ok: okSemanas && okSueltos && okFest,
+    okFest: okFest,
+    semFest: semFest,
+    completo: total >= max,
+    semanas: completas.length,
+    items: [
+      { ok: okSemanas, txt: 'Semanas completas de lunes a viernes: ' + completas.length + ' de 4' },
+      { ok: okSueltos, txt: sueltos.length ? 'Días sueltos (' + sueltos.length + '): ' + (okSueltos ? 'van juntos, bien' : 'tienen que ir juntos, pegados a una semana o dentro de otra semana') : 'Días sueltos: ninguno todavía' },
+      { ok: okFest, txt: 'Semanas con festivo: ' + semFest + ' (máximo ' + maxFest + ')' }
+    ]
+  };
+}
+
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const COLORS=['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#4b5563','#65a30d','#0f766e'];
+let cred=null, NAMES=[], V=null, add=new Set(), rem=new Set(), busy=false;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=k=>{const[y,m,d]=k.split('-').map(Number);return d+' '+MS[m-1]};
+function dow(k){const[y,m,d]=k.split('-').map(Number);return(new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7}
+
+function call(fn,...args){return new Promise((res,rej)=>google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e))[fn](...args))}
+
+async function loginView(err,adminMode,keepName){
+  if(!adminMode){try{NAMES=await call('nombres')}catch(e){err=err||'No se pudo cargar la lista.'}}
+  const opts='<option value="">— Elige tu nombre —</option>'+NAMES.map(n=>`<option ${n.nombre===keepName?'selected':''}>${esc(n.nombre)}</option>`).join('');
+  $('app').innerHTML=adminMode?`<div class="wrap"><div class="card login"><h1>Acceso encargada</h1><input id="adm" autocomplete="off" autocapitalize="characters" placeholder="CÓDIGO ADMIN"><div class="err">${err?esc(err):''}</div><button class="pri" id="go" style="width:100%">Entrar</button><button class="lnk" id="back">Volver</button></div></div>`
+  :`<div class="wrap"><div class="card login"><h1>Vacaciones 2027</h1><div class="sub">Elige tu nombre y escribe tu PIN</div>
+  <select id="nm">${opts}</select><div id="pinbox"></div><div class="err" id="err">${err?esc(err):''}</div>
+  <button class="pri" id="go" style="width:100%">Entrar</button><button class="lnk" id="adminlnk">Acceso encargada</button></div></div>`;
+  if(adminMode){$('go').onclick=()=>doLogin({admin:$('adm').value});$('back').onclick=()=>loginView();$('adm').focus();return}
+  const pinBox=()=>{const n=NAMES.find(x=>x.nombre===$('nm').value);
+    $('pinbox').innerHTML=!n?'':n.tienePin?`<label>Tu PIN</label><input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••">`
+    :`<label>Es tu primera vez: <b>crea tu PIN de 4 números</b> y apúntalo, lo necesitarás para volver a entrar.</label><input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="Nuevo PIN"><input id="pin2" type="password" inputmode="numeric" maxlength="4" placeholder="Repite el PIN">`;
+    if($('pin'))$('pin').onkeydown=e=>{if(e.key==='Enter')login()}};
+  $('nm').onchange=pinBox;pinBox();$('go').onclick=login;$('adminlnk').onclick=()=>loginView('',true);
+}
+function login(){
+  const nombre=$('nm').value;if(!nombre){$('err').textContent='Elige tu nombre.';return}
+  const pin=($('pin')||{}).value||'';
+  if(!/^\d{4}$/.test(pin)){$('err').textContent='El PIN tiene que ser de 4 números.';return}
+  if($('pin2')&&$('pin2').value!==pin){$('err').textContent='Los dos PIN no coinciden.';return}
+  doLogin({nombre,pin});
+}
+async function doLogin(c){
+  $('go').disabled=true;$('go').textContent='Entrando…';
+  try{V=await call('entrar',c);cred=c;try{localStorage.setItem('vac_cred',JSON.stringify(c))}catch(e){}add.clear();rem.clear();render()}
+  catch(e){loginView(e.message||String(e),!!c.admin,c.nombre)}
+}
+function logout(){try{localStorage.removeItem('vac_cred')}catch(e){}cred=null;V=null;loginView()}
+
+function rulesBox(){const rv=revisarReglas(mineList(),V.festivos,V.max,V.maxFest);
+  return '<div class="rules"><b>Comprobación</b> (4 semanas de lunes a viernes + 3 días juntos; si una semana tiene festivo, ese día va el lunes siguiente o con los 3; máx. '+(V.maxFest??2)+' semanas con festivo)<br>'+rv.items.map((i,j)=>{const bad=!i.ok&&(rv.completo||j===2);return `<span class="${i.ok?'ok':bad?'no':'pend'}">${i.ok?'✔':bad?'✘':'…'} ${esc(i.txt)}</span>`}).join('<br>')+'</div>'}
+function mineList(){return [...V.mios.filter(k=>!rem.has(k)),...add]}
+function mineCount(){return mineList().length}
+function semCount(){const s=[0,0];mineList().forEach(k=>s[Number(k.slice(5,7))<=6?0:1]++);return s}
+const blocked=k=>(V.bloqueados||[]).includes(Number(k.slice(5,7)));
+function semBox(i,v){const max=V.maxSemestre||99;const cls=v>max?'bad':v===max?'warn':'';
+  return `<div class="sem ${cls}">${i===0?'1er semestre (ene–jun)':'2º semestre (jul–dic)'}<br><b>${v}</b> días · objetivo ${V.objetivo||''} (máx. ${max})</div>`}
+
+function render(){
+  if(V.admin)return renderAdmin();
+  const mios=new Set(V.mios), oc=new Set(V.ocupados);
+  const n=mineCount(), left=V.max-n;
+  let h=`<div class="wrap"><div class="card"><div class="top"><div><h1>Hola, ${esc(V.nombre)}</h1><div class="sub">Toca los días que quieres de vacaciones y pulsa <b>Confirmar vacaciones</b>. Tu elección queda registrada como solicitud: <b>RRHH tiene que aprobarla</b> y puede sufrir modificaciones. Solo cuentan los días de lunes a viernes.</div></div>
+  <div><div class="counter"><b>${n}</b> de ${V.max} días · quedan <b style="font-size:15px">${left}</b></div><div class="bar"><i style="width:${Math.min(100,n/V.max*100)}%"></i></div><div class="sems">${semBox(0,semCount()[0])}${semBox(1,semCount()[1])}</div></div></div>${rulesBox()}
+  ${V.abierto?'':'<div class="closed">La elección está cerrada. Puedes ver tus días, pero ya no se pueden cambiar.</div>'}
+  <div class="msg" id="msg"></div></div>
+  <div class="card"><div class="legend"><span><i class="sw" style="background:var(--me)"></i>Tus vacaciones</span><span><i class="sw" style="background:#dcfce7;border:2px solid var(--sel)"></i>Elegido, sin guardar</span><span><i class="sw" style="background:#9ca3af"></i>Ocupado</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 3px,#fff 3px,#fff 6px);border:1px solid #f5c2c2"></i>Festivo</span><span><i class="sw" style="background:#efede8"></i>Fin de semana</span></div><div class="months">`;
+  for(let m=0;m<12;m++){
+    const first=(new Date(Date.UTC(V.anio,m,1)).getUTCDay()+6)%7, dim=new Date(Date.UTC(V.anio,m+1,0)).getUTCDate();
+    const mb=(V.bloqueados||[]).includes(m+1);
+    h+=`<div class="m ${mb?'blk':''}"><h3>${MONTHS[m]} ${mb?'<span>· no disponible</span>':''}</h3><div class="g">`+['L','M','X','J','V','S','D'].map(x=>`<div class="h">${x}</div>`).join('');
+    for(let i=0;i<first;i++)h+='<div class="d e"></div>';
+    for(let d=1;d<=dim;d++){const k=V.anio+'-'+pad(m+1)+'-'+pad(d);
+      if(dow(k)>=5){h+=`<div class="d we">${d}</div>`;continue}
+      if(V.festivos[k]){h+=`<div class="d fe" title="${esc(V.festivos[k])}">${d}<small>Festivo</small></div>`;continue}
+      if(mb&&!V.mios.includes(k)){h+=`<div class="d bl" data-bl="1">${d}</div>`;continue}
+      if(oc.has(k)){h+=`<div class="d oc" title="Ocupado">${d}<small>Ocupado</small></div>`;continue}
+      if(rem.has(k)){h+=`<div class="d rem" data-k="${k}">${d}</div>`;continue}
+      if(mios.has(k)){h+=`<div class="d me" data-k="${k}">${d}</div>`;continue}
+      if(add.has(k)){h+=`<div class="d add" data-k="${k}">${d}</div>`;continue}
+      h+=`<div class="d" data-k="${k}">${d}</div>`}
+    h+='</div></div>'}
+  h+='</div>';
+  const list=[...new Set([...V.mios.filter(k=>!rem.has(k)),...add])].sort();
+  h+=`<div class="mine"><b>Tus días:</b> ${list.length?periods(list):'ninguno todavía'}</div>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button id="refresh">Actualizar calendario</button><button id="out">Salir</button></div></div></div>
+  <div class="bottom ${add.size||rem.size?'show':''}"><div>${add.size?'+'+add.size+' días nuevos ':''}${rem.size?'−'+rem.size+' días quitados':''}</div><div style="display:flex;gap:8px"><button id="undo">Deshacer</button><button class="pri" id="save">Confirmar vacaciones</button></div></div>`;
+  const y=window.scrollY;$('app').innerHTML=h;window.scrollTo(0,y);
+  $('refresh').onclick=refresh;$('out').onclick=logout;
+  if($('save')){$('save').onclick=save;$('undo').onclick=()=>{add.clear();rem.clear();render()}}
+}
+/* ---------- Comprobante ---------- */
+const DLARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function periodsArr(list){
+  const out=[];
+  list.forEach(k=>{const last=out[out.length-1];
+    if(last){let[y,m,d]=last.to.split('-').map(Number);let t=new Date(Date.UTC(y,m-1,d)),ok=true;
+      while(true){t=new Date(t.getTime()+864e5);const tk=t.getUTCFullYear()+'-'+pad(t.getUTCMonth()+1)+'-'+pad(t.getUTCDate());if(tk===k)break;if(dow(tk)<5&&!V.festivos[tk]){ok=false;break}if(t.getUTCFullYear()>V.anio){ok=false;break}}
+      if(ok){last.to=k;last.n++;return}}
+    out.push({from:k,to:k,n:1})});
+  return out;
+}
+function largo(k){const[y,m,d]=k.split('-').map(Number);return DLARGO[new Date(Date.UTC(y,m-1,d)).getUTCDay()]+' '+d+' '+MS[m-1]}
+function receiptData(registro){
+  const list=[...V.mios].sort();const s=[0,0];list.forEach(k=>s[Number(k.slice(5,7))<=6?0:1]++);
+  return{nombre:V.nombre,registro:registro||'',total:list.length,max:V.max,s1:s[0],s2:s[1],
+    tramos:periodsArr(list).map(p=>p.from===p.to?largo(p.from)+' (1 día)':'Del '+largo(p.from)+' al '+largo(p.to)+' ('+p.n+(p.n===1?' día)':' días)'))}
+}
+function showReceipt(registro){
+  const R=receiptData(registro);
+  const box=document.createElement('div');box.className='rcpt-bg';box.id='rcpt';
+  box.innerHTML=`<div class="rcpt" role="dialog" aria-label="Comprobante de vacaciones">
+    <div class="ok"><i>✓</i>Solicitud registrada</div>
+    <div class="pend">⏳ <b>Pendiente de aprobación por RRHH.</b> Estas fechas aún no son definitivas y pueden sufrir modificaciones.</div>
+    <dl><dt>Nombre</dt><dd>${esc(R.nombre)}</dd>
+    <dt>Fechas elegidas (${R.total} de ${R.max} días)</dt><dd>${R.tramos.length?'<ul>'+R.tramos.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'Ninguna'}</dd>
+    <dt>Por semestre</dt><dd>1er semestre: ${R.s1} · 2º semestre: ${R.s2}</dd>
+    <dt>Fecha y hora del registro</dt><dd>${esc(R.registro)}</dd></dl>
+    <div class="btns"><button class="gbtn" id="rdl">Descargar o hacer captura</button><button id="rclose">Cerrar</button></div>
+    <div id="rimg"></div></div>`;
+  document.body.appendChild(box);
+  $('rclose').onclick=()=>box.remove();
+  box.onclick=e=>{if(e.target===box)box.remove()};
+  $('rdl').onclick=()=>downloadReceipt(R);
+}
+function downloadReceipt(R){
+  const W=1080,P=70,c=document.createElement('canvas');let x;
+  const font=(w,sz)=>w+' '+sz+'px Arial, Helvetica, sans-serif';
+  // calcular alto
+  const lines=[];const push=(t,lbl)=>lines.push({t,lbl});
+  push('NOMBRE',1);push(R.nombre);
+  push('FECHAS ELEGIDAS ('+R.total+' DE '+R.max+' DÍAS)',1);R.tramos.forEach(t=>push('• '+t));if(!R.tramos.length)push('Ninguna');
+  push('POR SEMESTRE',1);push('1er semestre: '+R.s1+'  ·  2º semestre: '+R.s2);push('FECHA Y HORA DEL REGISTRO',1);push(R.registro);
+  const H=400+lines.reduce((a,l)=>a+(l.lbl?62:54),0)+60;
+  c.width=W;c.height=H;x=c.getContext('2d');
+  x.fillStyle='#ffffff';x.fillRect(0,0,W,H);
+  x.fillStyle='#f0fdf4';x.strokeStyle='#16a34a';x.lineWidth=6;
+  const r=36;x.beginPath();x.moveTo(30+r,30);x.arcTo(W-30,30,W-30,H-30,r);x.arcTo(W-30,H-30,30,H-30,r);x.arcTo(30,H-30,30,30,r);x.arcTo(30,30,W-30,30,r);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#16a34a';x.beginPath();x.arc(P+40,P+80,40,0,Math.PI*2);x.fill();
+  x.fillStyle='#fff';x.font=font('bold',48);x.textAlign='center';x.textBaseline='middle';x.fillText('✓',P+40,P+82);
+  x.textAlign='left';x.fillStyle='#15803d';x.font=font('bold',54);x.fillText('Solicitud registrada',P+105,P+80);
+  x.fillStyle='#4b5563';x.font=font('normal',28);x.fillText('Comprobante de solicitud · Vacaciones '+V.anio,P+105,P+130);
+  x.fillStyle='#fffbeb';x.strokeStyle='#f59e0b';x.lineWidth=3;x.beginPath();x.rect(P,P+180,W-2*P,96);x.fill();x.stroke();
+  x.fillStyle='#92400e';x.font=font('bold',28);x.fillText('PENDIENTE DE APROBACIÓN POR RRHH',P+24,P+218);
+  x.font=font('normal',25);x.fillText('Estas fechas aún no son definitivas y pueden sufrir modificaciones.',P+24,P+256);
+  let y=390;
+  lines.forEach(l=>{
+    if(l.lbl){y+=24;x.fillStyle='#4b5563';x.font=font('600',26);x.fillText(l.t,P,y);y+=38}
+    else{x.fillStyle='#14532d';x.font=font('bold',32);let t=l.t;while(x.measureText(t).width>W-2*P&&t.length>4)t=t.slice(0,-2);x.fillText(t===l.t?t:t+'…',P,y);y+=54}
+  });
+  const url=c.toDataURL('image/png');
+  $('rimg').innerHTML='<img alt="Comprobante de vacaciones" src="'+url+'"><div class="tip">Si no se ha descargado: mantén pulsada la imagen y elige "Guardar imagen", o haz una captura de pantalla.</div>';
+  try{const a=document.createElement('a');a.href=url;a.download='Comprobante vacaciones '+V.anio+' - '+R.nombre+'.png';document.body.appendChild(a);a.click();a.remove()}catch(e){}
+}
+
+function periods(list){
+  const out=[];
+  list.forEach(k=>{const last=out[out.length-1];
+    if(last){let[y,m,d]=last.to.split('-').map(Number);let t=new Date(Date.UTC(y,m-1,d)),ok=true;
+      while(true){t=new Date(t.getTime()+864e5);const tk=t.getUTCFullYear()+'-'+pad(t.getUTCMonth()+1)+'-'+pad(t.getUTCDate());if(tk===k)break;if(dow(tk)<5&&!V.festivos[tk]){ok=false;break}if(t.getUTCFullYear()>V.anio){ok=false;break}}
+      if(ok){last.to=k;last.n++;return}}
+    out.push({from:k,to:k,n:1})});
+  return out.map(p=>p.from===p.to?fmt(p.from):fmt(p.from)+' – '+fmt(p.to)+' ('+p.n+')').join(' · ');
+}
+function msg(t,ok){const m=$('msg');if(!m)return;m.textContent=t;m.className='msg show '+(ok?'ok':'bad');m.scrollIntoView({block:'nearest',behavior:'smooth'})}
+
+document.addEventListener('click',e=>{
+  if(e.target.closest('.d[data-bl]')){msg('Ese mes la empresa no permite vacaciones.',false);return}
+  const c=e.target.closest('.d[data-k]');if(!c||!V||V.admin)return;
+  if(!V.abierto){msg('La elección está cerrada.',false);return}
+  const k=c.dataset.k;
+  if(V.mios.includes(k)){rem.has(k)?rem.delete(k):rem.add(k)}
+  else if(add.has(k))add.delete(k);
+  else{if(blocked(k)){msg('Ese mes la empresa no permite vacaciones.',false);return}
+    if(mineCount()>=V.max){msg('Ya tienes los '+V.max+' días elegidos. Quita alguno si quieres cambiarlo.',false);return}
+    const si=Number(k.slice(5,7))<=6?0:1;if(semCount()[si]>=V.maxSemestre){msg('Ya tienes '+V.maxSemestre+' días en el '+(si?'2º':'1er')+' semestre, que es el máximo. El reparto es '+V.objetivo+' días por semestre.',false);return}
+    add.add(k)}
+  render();
+});
+
+async function save(){
+  if(busy)return;busy=true;$('save').disabled=true;$('save').textContent='Guardando…';
+  try{const r=await call('guardar',cred,[...add],[...rem]);V=r.vista;add.clear();rem.clear();render();
+    if(r.ok){msg('¡Solicitud guardada! Tus días quedan reservados, pendientes de aprobación por RRHH.',true);showReceipt(r.registro)}else msg(r.aviso,false)}
+  catch(e){render();msg(e.message||String(e),false)}
+  busy=false;
+}
+async function refresh(){
+  try{V=await call('entrar',cred);
+    // si alguien ha cogido un día que tenías marcado sin guardar, se quita
+    const oc=new Set(V.ocupados||[]);let lost=0;add.forEach(k=>{if(oc.has(k)){add.delete(k);lost++}});
+    render();if(lost)msg(lost+' de los días que habías marcado los acaba de coger otra persona.',false)}catch(e){}
+}
+setInterval(()=>{if(V&&!busy&&!document.hidden)refresh()},30000);
+
+function renderAdmin(){
+  const idx={};V.personas.forEach((p,i)=>idx[p.nombre]=i);
+  let h=`<div class="wrap"><div class="card"><div class="top"><div><h1>Vista de administración</h1><div class="sub">Solo tú ves los nombres. Elección ${V.abierto?'<b>abierta</b>':'<b>cerrada</b>'} (se cambia en la hoja, pestaña Ajustes).</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pri" id="pdf">Descargar PDF para imprimir</button><button id="refresh">Actualizar</button><button id="out">Salir</button></div></div><div id="pdfmsg" class="msg"></div>
+  <table style="margin-top:10px"><tr><th>Persona</th><th>Días</th><th>1er sem.</th><th>2º sem.</th><th>Quedan</th><th>Regla</th></tr>`+V.personas.map((p,i)=>`<tr><td><i class="sw" style="background:${COLORS[i%COLORS.length]};vertical-align:middle;margin-right:6px"></i>${esc(p.nombre)}</td><td>${p.usados}/${p.max}</td><td>${p.s1}</td><td>${p.s2}</td><td>${Math.max(0,p.max-p.usados)}</td><td title="${esc(p.reglasTxt||'')}">${p.usados<p.max?'—':p.reglas?'<span style="color:#15803d">✔</span>':'<span style="color:#b91c1c">✘ '+esc(p.reglasTxt||'')+'</span>'}</td></tr>`).join('')+`</table></div><div class="card"><div class="months">`;
+  for(let m=0;m<12;m++){
+    const first=(new Date(Date.UTC(V.anio,m,1)).getUTCDay()+6)%7, dim=new Date(Date.UTC(V.anio,m+1,0)).getUTCDate();
+    h+=`<div class="m"><h3>${MONTHS[m]}</h3><div class="g">`+['L','M','X','J','V','S','D'].map(x=>`<div class="h">${x}</div>`).join('');
+    for(let i=0;i<first;i++)h+='<div class="d e"></div>';
+    for(let d=1;d<=dim;d++){const k=V.anio+'-'+pad(m+1)+'-'+pad(d);
+      if(dow(k)>=5){h+=`<div class="d we">${d}</div>`;continue}
+      if(V.festivos[k]){h+=`<div class="d fe" title="${esc(V.festivos[k])}">${d}</div>`;continue}
+      const n=V.reservas[k];
+      if(n){const c=COLORS[(idx[n]??7)%COLORS.length];h+=`<div class="d" style="background:${c};color:#fff;cursor:default" title="${esc(n)}">${d}<small>${esc(n.slice(0,6))}</small></div>`;continue}
+      h+=`<div class="d" style="cursor:default">${d}</div>`}
+    h+='</div></div>'}
+  h+='</div></div></div>';
+  $('app').innerHTML=h;$('refresh').onclick=refresh;$('out').onclick=logout;$('pdf').onclick=makePdf;
+}
+async function makePdf(){
+  const b=$('pdf'),m=$('pdfmsg');b.disabled=true;b.textContent='Preparando PDF…';
+  try{const url=await call('pdfAdmin',cred);
+    m.className='msg show ok';m.innerHTML='PDF listo (guardado también en tu Google Drive). <a href="'+url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a> → desde ahí lo descargas o imprimes en horizontal.';}
+  catch(e){m.className='msg show bad';m.textContent='No se pudo crear el PDF: '+(e.message||e)}
+  b.disabled=false;b.textContent='Descargar PDF para imprimir';
+}
+
+(function init(){let c=null;try{c=JSON.parse(localStorage.getItem('vac_cred')||'null')}catch(e){}
+  if(c){cred=c;call('entrar',c).then(v=>{V=v;render()}).catch(()=>loginView())}else loginView()})();
+</script>
+</body>
+</html>
