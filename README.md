@@ -16,7 +16,7 @@ Aplicación web gratuita (Google Sheets + Apps Script) para que un equipo elija 
 - Reparto por semestre: máximo 14 días en un semestre (13/10 o 10/13 con un día de margen).
 - 4 semanas completas de lunes a viernes + los días restantes juntos (pegados a una semana o dentro de otra semana). Si una semana tiene festivo, ese día va el lunes siguiente o junto a los días sueltos.
 - Máximo 2 semanas con festivo por persona.
-- Dos personas no pueden coger el mismo día aunque guarden a la vez.
+- Dos personas no pueden coger el mismo día aunque guarden a la vez, salvo en los días que la encargada pone en la pestaña **Días dobles**: ahí caben 2 personas (las demás ven "1 libre", sin saber quién lo tiene).
 
 **Para la encargada**
 - Vista de administración con nombres, días por semestre y si cada persona cumple las reglas.

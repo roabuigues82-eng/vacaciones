@@ -23,6 +23,9 @@ const HOJA_PERSONAS = 'Personas';
 const HOJA_RESERVAS = 'Reservas';
 const HOJA_FESTIVOS = 'Festivos';
 const HOJA_AJUSTES = 'Ajustes';
+const HOJA_DOBLES = 'Días dobles';
+// En los días de la pestaña "Días dobles" pueden coincidir hasta 2 personas
+const PLAZAS_DIA_DOBLE = 2;
 
 /* ---------- Preparación (ejecutar una vez) ---------- */
 function preparar() {
@@ -66,6 +69,14 @@ function preparar() {
   const yaHay = f.getDataRange().getValues().map(r => fechaClave_(r[0]));
   const faltan = fest.filter(r => yaHay.indexOf(r[0]) < 0);
   if (faltan.length) f.getRange(f.getLastRow() + 1, 1, faltan.length, 2).setValues(faltan);
+
+  let dd = ss.getSheetByName(HOJA_DOBLES) || ss.insertSheet(HOJA_DOBLES);
+  dd.getRange('A:A').setNumberFormat('@');
+  if (dd.getLastRow() < 1) {
+    dd.getRange(1, 1, 1, 3).setValues([['Fecha (AAAA-MM-DD)', 'Nota', 'Aquí pones los días en los que pueden coincidir 2 personas. El resto de días sigue sin solapes.']]);
+    dd.getRange(1, 1, 1, 3).setFontWeight('bold');
+    dd.setColumnWidths(1, 2, 160);
+  }
 
   let a = ss.getSheetByName(HOJA_AJUSTES) || ss.insertSheet(HOJA_AJUSTES);
   if (a.getLastRow() < 2) {
@@ -122,7 +133,15 @@ function leerTodo_() {
   const rs = ss.getSheetByName(HOJA_RESERVAS);
   rs.getDataRange().getValues().slice(1).forEach(r => {
     const k = fechaClave_(r[0]);
-    if (k) reservas[k] = String(r[1]).trim();
+    const n = String(r[1]).trim();
+    if (k && n) { reservas[k] = reservas[k] || []; if (reservas[k].indexOf(n) < 0) reservas[k].push(n); }
+  });
+
+  const dobles = {};
+  const hd = ss.getSheetByName(HOJA_DOBLES);
+  if (hd) hd.getDataRange().getValues().slice(1).forEach(r => {
+    const k = fechaClave_(r[0]);
+    if (k) dobles[k] = true;
   });
 
   const festivos = {};
@@ -136,13 +155,18 @@ function leerTodo_() {
   const admin = String(aj[0][0]).trim().toUpperCase();
   const abierto = String(aj[1][0]).trim().toUpperCase() !== 'NO';
 
-  return { personas, reservas, festivos, admin, abierto, correoAvisos };
+  return { personas, reservas, dobles, festivos, admin, abierto, correoAvisos };
 }
 
 function fechaClave_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   const s = String(v || '').trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+function plazas_(t, k) { return t.dobles[k] ? PLAZAS_DIA_DOBLE : 1; }
+function diasDe_(t, nombre) {
+  return Object.keys(t.reservas).filter(k => t.reservas[k].indexOf(nombre) >= 0 && esLaborable_(k, t.festivos));
 }
 
 function mesBloqueado_(k) {
@@ -197,14 +221,15 @@ function vista_(t, quien) {
     const usados = {}, diasDe = {};
     Object.keys(t.reservas).forEach(k => {
       if (!esLaborable_(k, t.festivos)) return;
-      const n = t.reservas[k];
-      usados[n] = usados[n] || [0, 0];
-      usados[n][semestre_(k) - 1]++;
-      (diasDe[n] = diasDe[n] || []).push(k);
+      t.reservas[k].forEach(n => {
+        usados[n] = usados[n] || [0, 0];
+        usados[n][semestre_(k) - 1]++;
+        (diasDe[n] = diasDe[n] || []).push(k);
+      });
     });
     return {
       admin: true, abierto: t.abierto, anio: ANIO, festivos: t.festivos, bloqueados: MESES_BLOQUEADOS,
-      reservas: t.reservas, maxSemestre: MAX_SEMESTRE, objetivo: OBJETIVO_SEMESTRE,
+      reservas: t.reservas, dobles: Object.keys(t.dobles), maxSemestre: MAX_SEMESTRE, objetivo: OBJETIVO_SEMESTRE,
       personas: t.personas.map(p => {
         const u = usados[p.nombre] || [0, 0];
         const rv = revisarReglas(diasDe[p.nombre] || [], t.festivos, p.max, MAX_SEMANAS_FESTIVO);
@@ -213,13 +238,18 @@ function vista_(t, quien) {
     };
   }
   const yo = quien;
-  const mios = [], ocupados = [];
+  // Las demás personas nunca aparecen con nombre: solo "ocupado" o "1 libre"
+  const mios = [], ocupados = [], conHueco = [];
   Object.keys(t.reservas).forEach(k => {
     if (!esLaborable_(k, t.festivos)) return;
-    (t.reservas[k] === yo.nombre ? mios : ocupados).push(k);
+    const quien = t.reservas[k];
+    if (quien.indexOf(yo.nombre) >= 0) mios.push(k);
+    else if (quien.length >= plazas_(t, k)) ocupados.push(k);
+    else conHueco.push(k);
   });
   return {
-    admin: false, abierto: t.abierto, anio: ANIO, nombre: yo.nombre, max: yo.max, mios, ocupados, festivos: t.festivos,
+    admin: false, abierto: t.abierto, anio: ANIO, nombre: yo.nombre, max: yo.max, mios, ocupados, conHueco,
+    dobles: Object.keys(t.dobles), festivos: t.festivos,
     bloqueados: MESES_BLOQUEADOS, maxSemestre: MAX_SEMESTRE, objetivo: OBJETIVO_SEMESTRE, maxFest: MAX_SEMANAS_FESTIVO
   };
 }
@@ -248,13 +278,15 @@ function guardar(cred, anadir, quitar) {
     anadir = (anadir || []).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
     quitar = (quitar || []).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
 
-    const mios = Object.keys(t.reservas).filter(k => t.reservas[k] === yo.nombre && esLaborable_(k, t.festivos));
+    const mios = diasDe_(t, yo.nombre);
     const quedan = mios.filter(k => quitar.indexOf(k) < 0);
     const nuevos = [], ocupados = [];
     anadir.forEach(k => {
       if (!esLaborable_(k, t.festivos) || mesBloqueado_(k)) return;
-      if (t.reservas[k] && t.reservas[k] !== yo.nombre) ocupados.push(k);
-      else if (!t.reservas[k]) nuevos.push(k);
+      const quien = t.reservas[k] || [];
+      if (quien.indexOf(yo.nombre) >= 0) return;
+      if (quien.length >= plazas_(t, k)) ocupados.push(k);
+      else nuevos.push(k);
     });
     if (ocupados.length) {
       return { ok: false, aviso: 'Alguien acaba de coger ' + ocupados.length + (ocupados.length === 1 ? ' día' : ' días') + ' de los que marcaste. No se ha guardado nada; revisa el calendario.', vista: vista_(t, yo) };
@@ -400,7 +432,7 @@ function avisar_(t, nombre, anadidos, quitados) {
     });
     return out.map(p => p.desde === p.hasta ? f(p.desde) : f(p.desde) + ' – ' + f(p.hasta) + ' (' + p.n + ' días)').join(', ');
   };
-  const suyos = Object.keys(t.reservas).filter(k => t.reservas[k] === nombre && esLaborable_(k, t.festivos));
+  const suyos = diasDe_(t, nombre);
   const sem = porSemestre_(suyos);
   const max = (t.personas.find(p => p.nombre === nombre) || {}).max || DIAS_POR_PERSONA;
   const rv = revisarReglas(suyos, t.festivos, max, MAX_SEMANAS_FESTIVO);
@@ -477,10 +509,15 @@ function generarHojaImprimir_() {
       let txt = d + ' ' + DIAS_CORTOS[dow];
       if (dow === 0 || dow === 6) { bg[r][m] = '#eef0f3'; fc[r][m] = '#6b7280'; }
       if (t.festivos[k]) { txt += '  ' + t.festivos[k]; bg[r][m] = '#fde2e2'; fc[r][m] = '#991b1b'; }
-      else if (t.reservas[k] && esLaborable_(k, t.festivos)) {
-        const n = t.reservas[k], i = (idx[n] != null ? idx[n] : 7) % COLORES_FONDO.length;
-        txt += '  ' + n; bg[r][m] = COLORES_FONDO[i]; fc[r][m] = COLORES_TEXTO[i]; fw[r][m] = 'bold';
-        usados[n] = usados[n] || [0, 0]; usados[n][semestre_(k) - 1]++;
+      else if (t.reservas[k] && t.reservas[k].length && esLaborable_(k, t.festivos)) {
+        const ns = t.reservas[k];
+        txt += '  ' + ns.join(' / ');
+        if (ns.length === 1) {
+          const i = (idx[ns[0]] != null ? idx[ns[0]] : 7) % COLORES_FONDO.length;
+          bg[r][m] = COLORES_FONDO[i]; fc[r][m] = COLORES_TEXTO[i];
+        } else { bg[r][m] = '#fef08a'; fc[r][m] = '#713f12'; }
+        fw[r][m] = 'bold';
+        ns.forEach(n => { usados[n] = usados[n] || [0, 0]; usados[n][semestre_(k) - 1]++; });
       } else if (MESES_BLOQUEADOS.indexOf(m + 1) >= 0 && dow !== 0 && dow !== 6) { fc[r][m] = '#9ca3af'; }
       val[r][m] = txt;
     }

@@ -39,6 +39,8 @@ button:disabled{opacity:.5;cursor:default}
 .d.we{background:#efede8;color:#b5afa6;cursor:default}
 .d.fe{background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 4px,#fff 4px,#fff 8px);color:#991b1b;cursor:default}
 .d.oc{background:#9ca3af;color:#fff;cursor:not-allowed}
+.d.sh{background:repeating-linear-gradient(135deg,#e5e7eb,#e5e7eb 5px,#f9fafb 5px,#f9fafb 10px);color:#374151}
+.d.x2 small{color:#a16207;font-weight:700}
 .d.me{background:var(--me);color:#fff;font-weight:600}
 .d.add{background:#dcfce7;color:#166534;border:2px solid var(--sel);font-weight:700}
 .d.rem{background:#fee2e2;color:#991b1b;border:2px dashed var(--rem);text-decoration:line-through}
@@ -185,13 +187,13 @@ function semBox(i,v){const max=V.maxSemestre||99;const cls=v>max?'bad':v===max?'
 
 function render(){
   if(V.admin)return renderAdmin();
-  const mios=new Set(V.mios), oc=new Set(V.ocupados);
+  const mios=new Set(V.mios), oc=new Set(V.ocupados), sh=new Set(V.conHueco||[]), dob=new Set(V.dobles||[]);
   const n=mineCount(), left=V.max-n;
   let h=`<div class="wrap"><div class="card"><div class="top"><div><h1>Hola, ${esc(V.nombre)}</h1><div class="sub">Toca los días que quieres de vacaciones y pulsa <b>Confirmar vacaciones</b>. Tu elección queda registrada como solicitud: <b>RRHH tiene que aprobarla</b> y puede sufrir modificaciones. Solo cuentan los días de lunes a viernes.</div></div>
   <div><div class="counter"><b>${n}</b> de ${V.max} días · quedan <b style="font-size:15px">${left}</b></div><div class="bar"><i style="width:${Math.min(100,n/V.max*100)}%"></i></div><div class="sems">${semBox(0,semCount()[0])}${semBox(1,semCount()[1])}</div></div></div>${rulesBox()}
   ${V.abierto?'':'<div class="closed">La elección está cerrada. Puedes ver tus días, pero ya no se pueden cambiar.</div>'}
   <div class="msg" id="msg"></div></div>
-  <div class="card"><div class="legend"><span><i class="sw" style="background:var(--me)"></i>Tus vacaciones</span><span><i class="sw" style="background:#dcfce7;border:2px solid var(--sel)"></i>Elegido, sin guardar</span><span><i class="sw" style="background:#9ca3af"></i>Ocupado</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 3px,#fff 3px,#fff 6px);border:1px solid #f5c2c2"></i>Festivo</span><span><i class="sw" style="background:#efede8"></i>Fin de semana</span></div><div class="months">`;
+  <div class="card"><div class="legend"><span><i class="sw" style="background:var(--me)"></i>Tus vacaciones</span><span><i class="sw" style="background:#dcfce7;border:2px solid var(--sel)"></i>Elegido, sin guardar</span><span><i class="sw" style="background:#9ca3af"></i>Ocupado</span><span><i class="sw" style="background:repeating-linear-gradient(135deg,#e5e7eb,#e5e7eb 3px,#f9fafb 3px,#f9fafb 6px);border:1px solid #d1d5db"></i>1 libre (día que admite 2 personas)</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 3px,#fff 3px,#fff 6px);border:1px solid #f5c2c2"></i>Festivo</span><span><i class="sw" style="background:#efede8"></i>Fin de semana</span></div><div class="months">`;
   for(let m=0;m<12;m++){
     const first=(new Date(Date.UTC(V.anio,m,1)).getUTCDay()+6)%7, dim=new Date(Date.UTC(V.anio,m+1,0)).getUTCDate();
     const mb=(V.bloqueados||[]).includes(m+1);
@@ -205,6 +207,8 @@ function render(){
       if(rem.has(k)){h+=`<div class="d rem" data-k="${k}">${d}</div>`;continue}
       if(mios.has(k)){h+=`<div class="d me" data-k="${k}">${d}</div>`;continue}
       if(add.has(k)){h+=`<div class="d add" data-k="${k}">${d}</div>`;continue}
+      if(sh.has(k)){h+=`<div class="d sh" data-k="${k}" title="Ya hay una persona; queda 1 plaza">${d}<small>1 libre</small></div>`;continue}
+      if(dob.has(k)){h+=`<div class="d x2" data-k="${k}" title="Este día admite 2 personas">${d}<small>x2</small></div>`;continue}
       h+=`<div class="d" data-k="${k}">${d}</div>`}
     h+='</div></div>'}
   h+='</div>';
@@ -331,8 +335,10 @@ function renderAdmin(){
     for(let d=1;d<=dim;d++){const k=V.anio+'-'+pad(m+1)+'-'+pad(d);
       if(dow(k)>=5){h+=`<div class="d we">${d}</div>`;continue}
       if(V.festivos[k]){h+=`<div class="d fe" title="${esc(V.festivos[k])}">${d}</div>`;continue}
-      const n=V.reservas[k];
-      if(n){const c=COLORS[(idx[n]??7)%COLORS.length];h+=`<div class="d" style="background:${c};color:#fff;cursor:default" title="${esc(n)}">${d}<small>${esc(n.slice(0,6))}</small></div>`;continue}
+      const ns=V.reservas[k]||[];const isD=(V.dobles||[]).includes(k);
+      if(ns.length===1){const n=ns[0];const c=COLORS[(idx[n]??7)%COLORS.length];h+=`<div class="d" style="background:${c};color:#fff;cursor:default" title="${esc(n)}${isD?' · admite 2':''}">${d}<small>${esc(n.slice(0,6))}</small></div>`;continue}
+      if(ns.length>1){h+=`<div class="d" style="background:#facc15;color:#713f12;cursor:default" title="${esc(ns.join(' / '))}">${d}<small>${esc(ns.map(n=>n.slice(0,3)).join('/'))}</small></div>`;continue}
+      if(isD){h+=`<div class="d x2" style="cursor:default" title="Admite 2 personas">${d}<small>x2</small></div>`;continue}
       h+=`<div class="d" style="cursor:default">${d}</div>`}
     h+='</div></div>'}
   h+='</div></div></div>';
