@@ -161,7 +161,11 @@ function leerTodo_() {
 function fechaClave_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   const s = String(v || '').trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // También acepta 7/7/2027, 07/07/2027 o 7-7-2027 (día/mes/año)
+  const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  return null;
 }
 
 function plazas_(t, k) { return t.dobles[k] ? PLAZAS_DIA_DOBLE : 1; }
