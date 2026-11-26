@@ -44,6 +44,8 @@ function preparar() {
     p.getRange(2, 2, n, 1).setValues(Array.from({ length: n }, () => ['']));
   }
   p.getRange(1, 1, 1, 3).setValues([['Nombre', 'PIN (lo crea cada persona)', 'Días']]).setFontWeight('bold');
+  // Columna D: días que le quedan de 2026 (lo rellena la encargada; sale en la planificación para RRHH)
+  if (!String(p.getRange(1, 4, 1, 1).getValues()[0][0]).trim()) p.getRange(1, 4, 1, 1).setValues([['Resto vacaciones 2026']]).setFontWeight('bold');
   p.getRange('B:B').setNumberFormat('@');
   p.setColumnWidths(1, 3, 170);
 
@@ -102,6 +104,11 @@ function preparar() {
     ]);
     a.getRange(4, 1, 2, 1).setFontWeight('bold');
   }
+  // Nombre de la tienda: solo sale en la pestaña Planificación (documento para RRHH)
+  if (!String(a.getRange(6, 1, 1, 1).getValues()[0][0]).trim()) {
+    a.getRange(6, 1, 1, 2).setValues([['Tienda (solo para Planificación)', '']]);
+    a.getRange(6, 1, 1, 1).setFontWeight('bold');
+  }
 
   const hoja1 = ss.getSheetByName('Hoja 1') || ss.getSheetByName('Sheet1');
   if (hoja1 && hoja1.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(hoja1);
@@ -127,7 +134,7 @@ function leerTodo_() {
   const ss = SpreadsheetApp.getActive();
   const personas = ss.getSheetByName(HOJA_PERSONAS).getDataRange().getValues().slice(1)
     .filter(r => r[0])
-    .map(r => ({ nombre: String(r[0]).trim(), pin: String(r[1]).trim(), max: Number(r[2]) || DIAS_POR_PERSONA }));
+    .map(r => ({ nombre: String(r[0]).trim(), pin: String(r[1]).trim(), max: Number(r[2]) || DIAS_POR_PERSONA, resto2026: r[3] === '' || r[3] == null ? '' : Number(r[3]) || 0 }));
 
   const reservas = {};
   const rs = ss.getSheetByName(HOJA_RESERVAS);
@@ -150,12 +157,13 @@ function leerTodo_() {
     if (k) festivos[k] = String(r[1] || 'Festivo');
   });
 
-  const aj = ss.getSheetByName(HOJA_AJUSTES).getRange(1, 2, 4, 1).getValues();
+  const aj = ss.getSheetByName(HOJA_AJUSTES).getRange(1, 2, 6, 1).getValues();
   const correoAvisos = String(aj[3][0] || '').trim();
+  const tienda = String(aj[5][0] || '').trim();
   const admin = String(aj[0][0]).trim().toUpperCase();
   const abierto = String(aj[1][0]).trim().toUpperCase() !== 'NO';
 
-  return { personas, reservas, dobles, festivos, admin, abierto, correoAvisos };
+  return { personas, reservas, dobles, festivos, admin, abierto, correoAvisos, tienda };
 }
 
 function fechaClave_(v) {
@@ -471,8 +479,91 @@ const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Vacaciones')
     .addItem('Preparar hoja para imprimir', 'imprimir')
+    .addItem('Preparar planificación (RRHH)', 'planificacion')
     .addToUi();
   try { generarHojaImprimir_(); } catch (e) { console.log('No se pudo actualizar Imprimir: ' + e); }
+  try { generarPlanificacion_(); } catch (e) { console.log('No se pudo actualizar Planificación: ' + e); }
+}
+
+function planificacion() {
+  const sh = generarPlanificacion_();
+  SpreadsheetApp.getActive().setActiveSheet(sh);
+  SpreadsheetApp.getActive().toast('Listo. Archivo > Imprimir (horizontal, ajustar a la página) o Archivo > Descargar > PDF.', 'Vacaciones', 8);
+}
+
+/** Pestaña "Planificación": la plantilla de RRHH rellenada con lo elegido en la app. */
+function generarPlanificacion_() {
+  const t = leerTodo_();
+  const ss = SpreadsheetApp.getActive();
+  const sh = ss.getSheetByName('Planificación') || ss.insertSheet('Planificación');
+  sh.clear();
+  sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart();
+
+  const cols = 17, filasPersonas = Math.max(20, t.personas.length);
+  const cab = ['Nombre', 'Resto vacaciones 2026', 'Vacaciones ' + ANIO, 'Total'].concat(MESES).concat(['Vacaciones planeadas total']);
+
+  // Días elegidos agrupados por mes y en tramos seguidos: "5–9, 26–28"
+  const tramosMes = dias => {
+    const porMes = {};
+    dias.sort().forEach(k => {
+      const m = Number(k.slice(5, 7)) - 1, d = Number(k.slice(8, 10));
+      const l = porMes[m] = porMes[m] || [];
+      const u = l[l.length - 1];
+      if (u) {
+        let seguido = true;
+        for (let x = u.hasta + 1; x < d; x++) {
+          const kx = k.slice(0, 8) + ('0' + x).slice(-2);
+          if (esLaborable_(kx, t.festivos)) { seguido = false; break; }
+        }
+        if (seguido) { u.hasta = d; return; }
+      }
+      l.push({ desde: d, hasta: d });
+    });
+    const out = {};
+    Object.keys(porMes).forEach(m => out[m] = porMes[m].map(p => p.desde === p.hasta ? String(p.desde) : p.desde + '–' + p.hasta).join(', '));
+    return out;
+  };
+
+  const filas = [];
+  for (let i = 0; i < filasPersonas; i++) {
+    const p = t.personas[i];
+    if (!p) { filas.push(new Array(cols).fill('')); continue; }
+    const dias = diasDe_(t, p.nombre);
+    const tm = tramosMes(dias);
+    const resto = p.resto2026 === '' ? '' : p.resto2026;
+    const fila = [p.nombre, resto, p.max, (Number(resto) || 0) + p.max];
+    for (let m = 0; m < 12; m++) fila.push(tm[m] || '');
+    fila.push(dias.length);
+    filas.push(fila);
+  }
+
+  sh.getRange(1, 1, 1, cols).merge().setValue('PLANIFICACIÓN DE VACACIONES ' + ANIO)
+    .setFontWeight('bold').setFontSize(13).setHorizontalAlignment('center');
+  sh.getRange(2, 7, 1, 2).merge().setValue('TIENDA').setFontWeight('bold').setHorizontalAlignment('right');
+  sh.getRange(2, 9, 1, 3).merge().setValue(t.tienda).setHorizontalAlignment('center')
+    .setBorder(null, null, true, null, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+
+  const cabR = sh.getRange(4, 1, 1, cols);
+  cabR.setValues([cab]).setBackground('#bfbfbf').setFontWeight('normal').setWrap(true)
+    .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  const datos = sh.getRange(5, 1, filas.length, cols);
+  datos.setValues(filas).setVerticalAlignment('middle').setHorizontalAlignment('center').setWrap(true);
+  sh.getRange(5, 1, filas.length, 1).setHorizontalAlignment('left');
+  // Columnas azul claro como en la plantilla
+  [2, 3, 4, cols].forEach(c => sh.getRange(5, c, filas.length, 1).setBackground('#dae3f3'));
+  sh.getRange(4, 1, filas.length + 1, cols)
+    .setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID)
+    .setFontFamily('Arial').setFontSize(9);
+
+  sh.setColumnWidth(1, 120);
+  sh.setColumnWidths(2, 3, 70);
+  sh.setColumnWidths(5, 12, 66);
+  sh.setColumnWidth(cols, 80);
+  sh.setRowHeight(4, 44);
+  sh.setRowHeights(5, filas.length, 26);
+  sh.setHiddenGridlines(true);
+  SpreadsheetApp.flush();
+  return sh;
 }
 
 function imprimir() {
@@ -552,17 +643,19 @@ function generarHojaImprimir_() {
 }
 
 /** Desde la vista de encargada: crea el PDF en tu Drive y devuelve el enlace. */
-function pdfAdmin(cred) {
+function pdfAdmin(cred, tipo) {
   const t = leerTodo_();
   const quien = identificar_(t, cred);
   if (!quien.admin) throw new Error('Solo la encargada puede descargar el PDF.');
   const ss = SpreadsheetApp.getActive();
-  const sh = generarHojaImprimir_();
+  const plan = tipo === 'planificacion';
+  const sh = plan ? generarPlanificacion_() : generarHojaImprimir_();
   const url = 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=pdf&gid=' + sh.getSheetId() +
     '&size=A4&portrait=false&scale=4&gridlines=false&printtitle=false&sheetnames=false&pagenum=UNDEFINED' +
     '&top_margin=0.3&bottom_margin=0.3&left_margin=0.3&right_margin=0.3&horizontal_alignment=CENTER';
   const blob = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } }).getBlob();
-  const nombre = (/vacaciones/i.test(ss.getName()) ? ss.getName() : 'Vacaciones ' + ANIO + ' - ' + ss.getName()) + '.pdf';
+  const nombre = plan ? 'Planificación vacaciones ' + ANIO + (t.tienda ? ' - ' + t.tienda : '') + '.pdf'
+    : (/vacaciones/i.test(ss.getName()) ? ss.getName() : 'Vacaciones ' + ANIO + ' - ' + ss.getName()) + '.pdf';
   const viejos = DriveApp.getFilesByName(nombre);
   while (viejos.hasNext()) viejos.next().setTrashed(true);
   const file = DriveApp.createFile(blob.setName(nombre));

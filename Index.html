@@ -326,7 +326,7 @@ setInterval(()=>{if(V&&!busy&&!document.hidden)refresh()},30000);
 
 function renderAdmin(){
   const idx={};V.personas.forEach((p,i)=>idx[p.nombre]=i);
-  let h=`<div class="wrap"><div class="card"><div class="top"><div><h1>Vista de administración</h1><div class="sub">Solo tú ves los nombres. Elección ${V.abierto?'<b>abierta</b>':'<b>cerrada</b>'} (se cambia en la hoja, pestaña Ajustes).</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pri" id="pdf">Descargar PDF para imprimir</button><button id="refresh">Actualizar</button><button id="out">Salir</button></div></div><div id="pdfmsg" class="msg"></div>
+  let h=`<div class="wrap"><div class="card"><div class="top"><div><h1>Vista de administración</h1><div class="sub">Solo tú ves los nombres. Elección ${V.abierto?'<b>abierta</b>':'<b>cerrada</b>'} (se cambia en la hoja, pestaña Ajustes).</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pri" id="pdf">Descargar PDF para imprimir</button><button id="pdfplan">PDF planificación (RRHH)</button><button id="refresh">Actualizar</button><button id="out">Salir</button></div></div><div id="pdfmsg" class="msg"></div>
   <table style="margin-top:10px"><tr><th>Persona</th><th>Días</th><th>1er sem.</th><th>2º sem.</th><th>Quedan</th><th>Regla</th></tr>`+V.personas.map((p,i)=>`<tr><td><i class="sw" style="background:${COLORS[i%COLORS.length]};vertical-align:middle;margin-right:6px"></i>${esc(p.nombre)}</td><td>${p.usados}/${p.max}</td><td>${p.s1}</td><td>${p.s2}</td><td>${Math.max(0,p.max-p.usados)}</td><td title="${esc(p.reglasTxt||'')}">${p.usados<p.max?'—':p.reglas?'<span style="color:#15803d">✔</span>':'<span style="color:#b91c1c">✘ '+esc(p.reglasTxt||'')+'</span>'}</td></tr>`).join('')+`</table></div><div class="card"><div class="months">`;
   for(let m=0;m<12;m++){
     const first=(new Date(Date.UTC(V.anio,m,1)).getUTCDay()+6)%7, dim=new Date(Date.UTC(V.anio,m+1,0)).getUTCDate();
@@ -342,14 +342,14 @@ function renderAdmin(){
       h+=`<div class="d" style="cursor:default">${d}</div>`}
     h+='</div></div>'}
   h+='</div></div></div>';
-  $('app').innerHTML=h;$('refresh').onclick=refresh;$('out').onclick=logout;$('pdf').onclick=makePdf;
+  $('app').innerHTML=h;$('refresh').onclick=refresh;$('out').onclick=logout;$('pdf').onclick=()=>makePdf('calendario');$('pdfplan').onclick=()=>makePdf('planificacion');
 }
-async function makePdf(){
-  const b=$('pdf'),m=$('pdfmsg');b.disabled=true;b.textContent='Preparando PDF…';
-  try{const url=await call('pdfAdmin',cred);
+async function makePdf(tipo){
+  const b=$(tipo==='planificacion'?'pdfplan':'pdf'),m=$('pdfmsg'),txt=b.textContent;b.disabled=true;b.textContent='Preparando PDF…';
+  try{const url=await call('pdfAdmin',cred,tipo);
     m.className='msg show ok';m.innerHTML='PDF listo (guardado también en tu Google Drive). <a href="'+url+'" target="_blank" rel="noopener"><b>Abrir PDF</b></a> → desde ahí lo descargas o imprimes en horizontal.';}
   catch(e){m.className='msg show bad';m.textContent='No se pudo crear el PDF: '+(e.message||e)}
-  b.disabled=false;b.textContent='Descargar PDF para imprimir';
+  b.disabled=false;b.textContent=txt;
 }
 
 (function init(){let c=null;try{c=JSON.parse(localStorage.getItem('vac_cred')||'null')}catch(e){}
