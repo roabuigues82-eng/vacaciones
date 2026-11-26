@@ -22,7 +22,7 @@ Aplicación web gratuita (Google Sheets + Apps Script) para que un equipo elija 
 - Vista de administración con nombres, días por semestre y si cada persona cumple las reglas.
 - Correo automático cada vez que alguien guarda cambios.
 - Calendario anual listo para imprimir (pestaña *Imprimir* o PDF en Drive).
-- Pestaña *Planificación*: la plantilla de RRHH (nombre, resto de vacaciones del año anterior, total y días elegidos por mes) rellenada automáticamente, también en PDF.
+- Pestaña *Planificación*: la plantilla de RRHH (nombre, resto de vacaciones del año anterior, total y número de días elegidos en cada mes) rellenada automáticamente, también en PDF.
 - Se puede cerrar la elección poniendo `NO` en *Ajustes › B2*.
 
 ## Archivos

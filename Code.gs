@@ -502,34 +502,14 @@ function generarPlanificacion_() {
   const cols = 17, filasPersonas = Math.max(20, t.personas.length);
   const cab = ['Nombre', 'Resto vacaciones 2026', 'Vacaciones ' + ANIO, 'Total'].concat(MESES).concat(['Vacaciones planeadas total']);
 
-  // Días elegidos agrupados por mes y en tramos seguidos: "5–9, 26–28"
-  const tramosMes = dias => {
-    const porMes = {};
-    dias.sort().forEach(k => {
-      const m = Number(k.slice(5, 7)) - 1, d = Number(k.slice(8, 10));
-      const l = porMes[m] = porMes[m] || [];
-      const u = l[l.length - 1];
-      if (u) {
-        let seguido = true;
-        for (let x = u.hasta + 1; x < d; x++) {
-          const kx = k.slice(0, 8) + ('0' + x).slice(-2);
-          if (esLaborable_(kx, t.festivos)) { seguido = false; break; }
-        }
-        if (seguido) { u.hasta = d; return; }
-      }
-      l.push({ desde: d, hasta: d });
-    });
-    const out = {};
-    Object.keys(porMes).forEach(m => out[m] = porMes[m].map(p => p.desde === p.hasta ? String(p.desde) : p.desde + '–' + p.hasta).join(', '));
-    return out;
-  };
-
   const filas = [];
   for (let i = 0; i < filasPersonas; i++) {
     const p = t.personas[i];
     if (!p) { filas.push(new Array(cols).fill('')); continue; }
     const dias = diasDe_(t, p.nombre);
-    const tm = tramosMes(dias);
+    // Cantidad de días de vacaciones en cada mes
+    const tm = {};
+    dias.forEach(k => { const m = Number(k.slice(5, 7)) - 1; tm[m] = (tm[m] || 0) + 1; });
     const resto = p.resto2026 === '' ? '' : p.resto2026;
     const fila = [p.nombre, resto, p.max, (Number(resto) || 0) + p.max];
     for (let m = 0; m < 12; m++) fila.push(tm[m] || '');
